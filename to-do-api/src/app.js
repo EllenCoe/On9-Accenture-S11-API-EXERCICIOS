@@ -1,12 +1,13 @@
-const express = require("express")
-const app = express()
+const express = require("express");
 
-const index = require("./routes/index")
-const toDoRotas = require("./routes/toDoRoutes")
+const app = express();
 
-app.use(express.json())
+const index = require("./routes/index");
+const toDoRoutes = require("./routes/toDoRoutes");
 
-app.use("/", index)
-app.use("/tarefas", toDoRotas)
+app.use(express.json());
 
-module.exports = app
+app.use("/", index);
+app.use("/tarefas", toDoRoutes);
+
+module.exports = app;

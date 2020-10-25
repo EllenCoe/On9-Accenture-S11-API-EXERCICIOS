@@ -1,77 +1,92 @@
-const { response, request } = require("express")
-const tarefasModels = require("../models/tarefas.json")
+const tarefasModels = require("../models/tarefas.json");
 
-const getAll = (request, response)=>{
-    response.status(200).send(tarefasModels)
-}
+const getAll = (req, resp) => {
+  resp.status(200).send(tarefasModels);
+};
 
-const criarTarefa = (request, response)=>{
-    let { descricao, nomeColaborador } = request.body
-    
-    const novaTarefa ={
-        id: Math.random().toString(32).substr(2,9),
-        dataInclusao: new Date().toString(),
-        concluido: false,
-        descricao: descricao,
-        nomeColaborador: nomeColaborador
+const criarTarefa = (req, resp) => {
+  const { descricao, nomeColaborador } = req.body;
+
+  const novaTarefa = {
+    id: Math.random().toString(32).substr(2, 8),
+    dataInclusao: new Date().toString(),
+    concluido: false,
+    descricao: descricao,
+    nomeColaborador: nomeColaborador,
+  };
+  tarefasModels.push(novaTarefa);
+
+  resp.status(201).json(novaTarefa);
+};
+
+const deletarTarefa = (req, resp) => {
+  const { id } = req.params;
+
+  const index = tarefasModels.findIndex((tarefa) => tarefa.id == id);
+
+  const tarefa = tarefasModels[index];
+
+  if (tarefa.concluido) {
+    resp.status(500).send({
+      message: "Não é possível excluir uma tarefa concluida!",
+    });
+  } else {
+    if (index >= 0) {
+      tarefasModels.splice(index, 1);
+      resp.status(200).send({
+        message: "Tarefa deletada com sucesso!",
+      });
+    } else {
+      resp.status(404).send({
+        message: "Tarefa não encontrada.",
+      });
     }
+  }
+};
 
-    tarefasModels.push(novaTarefa);
+const atualizarTarefa = (req, resp) => {
+  const { id } = req.params;
+  const { descricao, nomeColaborador, concluido } = req.body;
 
-    response.status(201).json(novaTarefa)
-}
+  const tarefa = tarefasModels.find((tarefa) => tarefa.id == id);
 
-const atualizarTarefa = (request, response) =>{
-    const { id } = request.params //pega o ID na URL
-    const { concluido, descricao, nomeColaborador } = request.body //pega os dados enviados pelo usuário no body
+  if (tarefa.concluido) {
+    resp.status(500).send({
+      message: "Não é possível atualizar uma tarefa concluida!",
+    });
+  } else {
+    const tarefaAtualizada = {
+      id: tarefa.id,
+      dataInclusao: tarefa.dataInclusao,
+      concluido: concluido,
+      descricao: descricao,
+      nomeColaborador: nomeColaborador,
+    };
 
-    const tarefaAtualizada = tarefasModels.find(tarefa => tarefa.id == id) //procura a tarefa q será atualizada
+    const index = tarefasModels.findIndex((tarefa) => tarefa.id == id);
 
-    const novaTarefa = { //construir o novo objeto editado
-        id: tarefaAtualizada.id, //manter o id que já existe
-        dataInclusao: tarefaAtualizada.dataInclusao, //manter a data que já existe
-        concluido: concluido, //adicionando o valor "concluido" que foi mandado pelo usuario
-        descricao: descricao, //adicionando o valor "descricao" que foi mandado pelo usuario
-        nomeColaborador: nomeColaborador //adicionando o valor "nomeColaborador" que foi mandado pelo usuario
-    }
+    tarefasModels[index] = tarefaAtualizada;
 
-    const index = tarefasModels.indexOf(tarefaAtualizada) //procuro a posição dentro do JSON do objeto que será atualizado
+    resp.status(200).json(tarefasModels[index]);
+  }
+};
 
-    tarefasModels[index] = novaTarefa //atribuindo a antiga tarefa a nova que construimos
+const concluirTarefa = (req, resp) => {
+  const { id } = req.params;
 
-    response.status(200).json(tarefasModels[index])
+  const tarefa = tarefasModels.find((tarefa) => tarefa.id == id);
 
-}
+  tarefa.concluido = true;
 
-const concluirTarefa = (request, response)=>{
-    const { id } = request.params //pegando o valor do ID mandado na URL
-    const { concluido } = request.body //pegando o valor de "concluido" enviado no Body
-
-    const tarefa = tarefasModels.find(tarefa => tarefa.id == id)//encontrando a tarefa referente ao ID
-
-    tarefa.concluido = concluido//atualizando o campo "concluido" no nosso JSON
-
-    response.status(200).json({
-        mensagem: "Tarefa concluida",
-        tarefa
-    })
-
-}
-
-const deletarTarefa = (request, response)=>{
-    const { id } = request.params
-    const tarefaFiltrada = tarefasModels.find(tarefa => tarefa.id == id)
-
-    const index = tarefasModels.indexOf(tarefaFiltrada)
-    tarefasModels.splice(index, 1)
-
-    response.json({mensagem: "Tarefa deletada com sucesso"})
-}
-
-module.exports ={
-    getAll,
-    criarTarefa,
-    deletarTarefa,
-    atualizarTarefa,
-    concluirTarefa
-}
+  resp.status(200).json({
+    message: "Tarefa concluida",
+    tarefa,
+  });
+};
+module.exports = {
+  getAll,
+  criarTarefa,
+  deletarTarefa,
+  atualizarTarefa,
+  concluirTarefa,
+};
